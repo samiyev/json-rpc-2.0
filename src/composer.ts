@@ -17,19 +17,21 @@ export interface IComposition {
     options: IComposerOptions;
 }
 
-export interface ISanction {
+export interface IFeature {
     [key: string]: any;
 }
 
 export interface IMethod {
-    sanction?: ISanction;
+    feature?: IFeature;
     operation: (params?: any) => Promise<any>;
 }
 
-export class Composer {
+export class Composer{
     private preparedMethods = {};
+    private handlers: IHandlers;
 
     constructor({defines, handlers, options}: IComposition) {
+        this.handlers = handlers;
         this.initDefines(defines);
     }
 
@@ -48,9 +50,10 @@ export class Composer {
 
                 if (method.operation && method.operation.constructor === Function) {
                     const methodFullname = `${moduleName}.${prop}`;
-                    this.preparedMethods[methodFullname] = method;
+                    const operation: any = method.operation;
+                    operation.feature = method.feature;
+                    this.preparedMethods[methodFullname] = operation;
                 }
-
             });
         });
     }
