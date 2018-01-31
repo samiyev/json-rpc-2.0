@@ -1,15 +1,15 @@
 import {Controller} from "./controller";
+import {Processor} from "./processor";
 import {Composer} from "./composer";
 import * as Errors from "./errors";
-import {Processor} from "./processor";
 import {Cluster} from "./cluster";
 import {Define} from "./define";
 
 export * from "./controller";
-export * from "./composer";
-export * from "./define";
-export * from "./cluster";
 export * from "./processor";
+export * from "./composer";
+export * from "./cluster";
+export * from "./define";
 export * from "./errors";
 
 export {
