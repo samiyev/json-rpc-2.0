@@ -1,10 +1,11 @@
 import {Define, IDefine} from "./define";
-import {MethodNotFound} from "./errors";
+import {MethodNotFound, ModuleError, ServerError} from "./errors";
+import {Processor} from "./processor";
 
 export interface IHandlers {
-    init: (method: string, params: any, sanction: any) => Promise<any>;
-    reject: (method: string, params: any, error: any) => Promise<any>;
-    resolve: (method: string, params: any, result: any) => Promise<any>;
+    init?: (client, request, method: IMethod) => Promise<any>;
+    reject?: (client, request, method: IMethod, error) => Promise<any>;
+    resolve?: (client, request, method: IMethod, result) => Promise<any>;
 }
 
 export interface IComposerOptions {
@@ -13,8 +14,8 @@ export interface IComposerOptions {
 
 export interface IComposition {
     defines: any[];
-    handlers: IHandlers;
-    options: IComposerOptions;
+    handlers?: IHandlers;
+    options?: IComposerOptions;
 }
 
 export interface IFeature {
@@ -26,41 +27,62 @@ export interface IMethod {
     operation: (params?: any) => Promise<any>;
 }
 
-export class Composer{
-    private preparedMethods = {};
-    private handlers: IHandlers;
+export interface Response {
+    client: any;
+    response: {
+        jsonrpc: string;
+        id: number | null;
+        error: any;
+        result: any;
+    }
+}
+
+export class Composer extends Processor {
 
     constructor({defines, handlers, options}: IComposition) {
-        this.handlers = handlers;
-        this.initDefines(defines);
+        super(defines, handlers);
     }
 
-    initDefines(defines) {
-        defines.forEach(define => {
+    async onRequest(client, request): Promise<Response> {
+        let result, error;
 
-            if (!(define instanceof Define)) {
-                throw new Error('') //Todo-: Xatolikni etiborga olish kerak!
+        try {
+            if (!request) request = client = {};
+
+            var method: IMethod = await this.getMethod(request.method);
+
+            if (this.handlers.init) {
+                await this.handlers.init.call(client, request, method);
             }
 
-            const props: string[] = Object.getOwnPropertyNames(define);
-            const moduleName: string = define.modulename.toLowerCase();
+            result = await method.operation.call(client, request.params);
 
-            props.forEach(prop => {
-                const method: IMethod = define[prop];
+            if (this.handlers.resolve) {
+                await this.handlers.resolve.call(client, request, method, result);
+            }
+        }
+        catch (err) {
+            if (err instanceof ModuleError) {
+                error = err;
+            }
+            else {
+                error = ServerError(err);
+            }
 
-                if (method.operation && method.operation.constructor === Function) {
-                    const methodFullname = `${moduleName}.${prop}`;
-                    const operation: any = method.operation;
-                    operation.feature = method.feature;
-                    this.preparedMethods[methodFullname] = operation;
+            if (this.handlers.reject) {
+                await this.handlers.reject.call(client, request, method, error);
+            }
+        }
+        finally {
+            return {
+                client: client,
+                response: {
+                    jsonrpc: "2.0",
+                    id: request.id,
+                    result: result || undefined,
+                    error: error || undefined,
                 }
-            });
-        });
-    }
-
-    getMethod(name) {
-        const method = this.preparedMethods[name];
-        if (!method) throw MethodNotFound(method);
-        return method;
+            };
+        }
     }
 }
