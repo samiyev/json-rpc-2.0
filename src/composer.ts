@@ -3,9 +3,9 @@ import {MethodNotFound, ModuleError, ServerError} from "./errors";
 import {Processor} from "./processor";
 
 export interface IHandlers {
-    init?: (client, request, method: IMethod) => Promise<any>;
-    reject?: (client, request, method: IMethod, error) => Promise<any>;
-    resolve?: (client, request, method: IMethod, result) => Promise<any>;
+    init?: (request, method: IMethod) => Promise<any>;
+    reject?: (request, method: IMethod, error) => Promise<any>;
+    resolve?: (request, method: IMethod, result) => Promise<any>;
 }
 
 export interface IComposerOptions {
@@ -45,9 +45,8 @@ export class Composer extends Processor {
 
     async onRequest(client, request): Promise<Response> {
         let result, error;
-
+        console.log(request, client)
         try {
-            if (!request) request = client = {};
 
             var method: IMethod = await this.getMethod(request.method);
 
