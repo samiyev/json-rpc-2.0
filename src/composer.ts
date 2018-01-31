@@ -1,4 +1,5 @@
 import {Define, IDefine} from "./define";
+import {MethodNotFound} from "./errors";
 
 export interface IHandlers {
     init: (method: string, params: any, sanction: any) => Promise<any>;
@@ -34,11 +35,29 @@ export class Composer {
 
     initDefines(defines) {
         defines.forEach(define => {
-            if(!(define instanceof Define)){
-                throw new Error()
+
+            if (!(define instanceof Define)) {
+                throw new Error('') //Todo-: Xatolikni etiborga olish kerak!
             }
-            const props = Object.getOwnPropertyNames(define);
+
+            const props: string[] = Object.getOwnPropertyNames(define);
+            const moduleName: string = define.modulename.toLowerCase();
+
+            props.forEach(prop => {
+                const method: IMethod = define[prop];
+
+                if (method.operation && method.operation.constructor === Function) {
+                    const methodFullname = `${moduleName}.${prop}`;
+                    this.preparedMethods[methodFullname] = method;
+                }
+
+            });
         });
     }
-}
 
+    getMethod(name) {
+        const method = this.preparedMethods[name];
+        if (!method) throw MethodNotFound(method);
+        return method;
+    }
+}

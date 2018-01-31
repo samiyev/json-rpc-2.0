@@ -1,13 +1,22 @@
+import {Controller} from "./controller";
 import {Composer} from "./composer";
-import {Define} from "./define";
 import * as Errors from "./errors";
+import {Process} from "./process";
+import {Cluster} from "./cluster";
+import {Define} from "./define";
 
+export * from "./controller";
 export * from "./composer";
 export * from "./define";
+export * from "./cluster";
+export * from "./process";
 export * from "./errors";
 
 export {
-    Errors,
+    Controller,
     Composer,
-    Define
+    Cluster,
+    Process,
+    Define,
+    Errors
 }

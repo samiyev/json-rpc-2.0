@@ -35,28 +35,3 @@ export function InternalError(data) {
 export function ParseError(data) {
     return new ModuleError('Parse error', -32700, data);
 }
-
-
-new Composer({
-    defines: [],
-    handlers: {
-        init: init,
-        reject: reject,
-        resolve: resolve
-    },
-    options: {
-        workers: 4
-    }
-});
-
-async function init(method, params, sanction): Promise<any> {
-
-}
-
-async function reject(method, params, error): Promise<any> {
-
-}
-
-async function resolve(method, params, result): Promise<any> {
-
-}
